@@ -158,6 +158,8 @@ public class BBDispatcherServlet extends HttpServlet {
                 }
 
                 // 获得 Http 请求的参数集合
+                // 处理中文乱码
+                request.setCharacterEncoding("utf-8");
                 Map<String, String[]> parameterMap =
                         request.getParameterMap();
 
@@ -196,10 +198,49 @@ public class BBDispatcherServlet extends HttpServlet {
 
                 }
 
-                bbHandler.getMethod()
+                Object result = bbHandler.getMethod()
                         .invoke(bbHandler.getController(), params);
+
+                // 对返回结果进行解析 => 原生 springmvc 是通过视图解析器完成
+                // 这里直接解析
+                if (result instanceof String) {
+
+                    String viewName = (String) result;
+                    String contextPath = request.getContextPath();
+                    System.out.println("contextPath = " + contextPath);
+
+                    if (viewName.contains(":")) {
+                        // 说明返回的String 是"forward:/login_ok.jsp"类型
+                        String viewType = viewName.split(":")[0];
+                        String viewPage = viewName.split(":")[1];
+                        System.out.println("viewType = " + viewType);
+                        System.out.println("viewPage = " + viewPage);
+
+                        if (viewPage.charAt(0) == '/') {
+                            viewPage = contextPath + viewPage;
+                        }
+                        // 判断类型
+                        if ("forward".equals(viewType)) {
+                            System.out.println("添加工程路径后 viewPage = " + viewPage);
+                            request.getRequestDispatcher(viewPage)
+                                    .forward(request, response);
+                        } else if ("redirect".equals(viewType)) {
+                            response.sendRedirect(viewPage);
+                        }
+                    } else {
+                        // 默认请求转发
+                        if (viewName.charAt(0) == '/') {
+                            viewName = contextPath + viewName;
+                        }
+                        request.getRequestDispatcher(viewName)
+                                .forward(request, response);
+                    }
+
+                }// TODO 这里可以拓展类型
             }
         } catch (IOException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (ServletException e) {
             throw new RuntimeException(e);
         }
     }

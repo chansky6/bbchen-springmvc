@@ -17,4 +17,11 @@ public interface MonsterService {
      * @return
      */
     ArrayList<Monster> findMonsterByName(String name);
+
+    /**
+     * 处理登录
+     * @param name
+     * @return
+     */
+    public boolean login(String name);
 }

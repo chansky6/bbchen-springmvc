@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+/**
+ * @author BBChen
+ */
 @Controller
 public class MonsterController {
 
@@ -22,6 +25,8 @@ public class MonsterController {
     /**
      * 编写方法可以列出 Monster 列表
      * 直接使用原生servlet
+     * @param request
+     * @param response
      */
     @RequestMapping(value = "/monster/list")
     public void listMonsters(HttpServletRequest request, HttpServletResponse response) {
@@ -49,6 +54,12 @@ public class MonsterController {
         }
     }
 
+    /**
+     * 根据名字查找 Monster
+     * @param request
+     * @param response
+     * @param name
+     */
     @RequestMapping(value = "/monster/find")
     public void findMonsterByName(HttpServletRequest request,
                                   HttpServletResponse response,
@@ -77,6 +88,35 @@ public class MonsterController {
             e.printStackTrace();
         }
     }
+
+
+    /**
+     * 处理登录方法
+     * @param monsterName
+     * @return
+     */
+    @RequestMapping(value = "/monster/login")
+    public String login(HttpServletRequest request,
+                        HttpServletResponse response,
+                        String monsterName) {
+
+        System.out.println("---接收到monsterName---" + monsterName);
+        boolean login = monsterService.login(monsterName);
+
+        // 将 monsterName 设置到 request 域
+        request.setAttribute("monsterName", monsterName);
+        if (login) {
+            // 登录成功
+//            return "forward:/login_ok.jsp";
+            // 测试重定向
+//            return "redirect:/bb-springmvc/login_ok.jsp";
+            return "/login_ok.jsp";
+        } else {
+            // 登录失败
+            return "forward:/login_error.jsp";
+        }
+    }
+
 
 /*
     @RequestMapping(value = "/monster/test")

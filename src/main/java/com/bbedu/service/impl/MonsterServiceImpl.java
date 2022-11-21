@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 /**
  * MonsterServiceImpl 作为 service 注入 spring
+ * @author BBChen
  */
 @Service(value = "monsterService")
 public class MonsterServiceImpl implements MonsterService {
@@ -46,5 +47,16 @@ public class MonsterServiceImpl implements MonsterService {
         }
 
         return findMonsters;
+    }
+
+    @Override
+    public boolean login(String name) {
+
+        // 实际是到 DB 验证 -> 此处模拟
+        if ("牛魔王".equals(name)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
