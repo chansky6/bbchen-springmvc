@@ -3,6 +3,7 @@ package com.bbedu.controller;
 import com.bbedu.bbspringmvc.annotation.AutoWired;
 import com.bbedu.bbspringmvc.annotation.Controller;
 import com.bbedu.bbspringmvc.annotation.RequestMapping;
+import com.bbedu.bbspringmvc.annotation.RequestParam;
 import com.bbedu.entity.Monster;
 import com.bbedu.service.MonsterService;
 
@@ -30,6 +31,35 @@ public class MonsterController {
         StringBuilder content = new StringBuilder("<h1>妖怪列表信息</h1>");
 
         ArrayList<Monster> monsterList = monsterService.getMonsterList();
+        content.append("<table>");
+        content.append("<table border='1px' width='500px' style='border-collapse:collapse'>");
+        for (Monster monster : monsterList) {
+            content.append("<tr><td>" + monster.getId()
+                    +"</td><td>" + monster.getName()
+                    +"</td><td>" + monster.getSkill()
+                    +"</td><td>" + monster.getAge() + "</td></tr>");
+        }
+        content.append("</table>");
+
+        try {
+            PrintWriter printWriter = response.getWriter();
+            printWriter.write(content.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @RequestMapping(value = "/monster/find")
+    public void findMonsterByName(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  String name) {
+        // 设置返回类型
+        response.setContentType("text/html;charset=utf-8");
+
+        System.out.println("---接收到的name---" + name);
+        StringBuilder content = new StringBuilder("<h1>妖怪列表信息</h1>");
+
+        ArrayList<Monster> monsterList = monsterService.findMonsterByName(name);
         content.append("<table>");
         content.append("<table border='1px' width='500px' style='border-collapse:collapse'>");
         for (Monster monster : monsterList) {

@@ -111,13 +111,12 @@ public class BBWebApplicationContext {
                     // 有 @Service
                     Service serviceAnnotation = clazz.getAnnotation(Service.class);
                     String beanName = serviceAnnotation.value();
-
+                    Object instance = clazz.newInstance();
                     if ("".equals(beanName)) {
                         // 未指定 value
                         // 通过 接口名/类名(首字母小写) 注入 ioc
                         // 得到所有接口名
                         Class<?>[] interfaces = clazz.getInterfaces();
-                        Object instance = clazz.newInstance();
                         // 通过多个接口名注入
                         for (Class<?> anInterface : interfaces) {
                             String beanName2 =
@@ -126,7 +125,7 @@ public class BBWebApplicationContext {
                         }
 
                     } else {
-                        ioc.put(StringUtils.uncapitalize(beanName), clazz.newInstance());
+                        ioc.put(StringUtils.uncapitalize(beanName), instance);
                     }
                 }
             } catch (ClassNotFoundException e) {
