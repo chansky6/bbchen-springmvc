@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 
 /**
  * 用于标识 Service 对象，并注入 Spring 对象
+ * @author BBChen
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

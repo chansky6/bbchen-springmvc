@@ -1,9 +1,6 @@
 package com.bbedu.controller;
 
-import com.bbedu.bbspringmvc.annotation.AutoWired;
-import com.bbedu.bbspringmvc.annotation.Controller;
-import com.bbedu.bbspringmvc.annotation.RequestMapping;
-import com.bbedu.bbspringmvc.annotation.RequestParam;
+import com.bbedu.bbspringmvc.annotation.*;
 import com.bbedu.entity.Monster;
 import com.bbedu.service.MonsterService;
 
@@ -115,6 +112,23 @@ public class MonsterController {
             // 登录失败
             return "forward:/login_error.jsp";
         }
+    }
+
+    /**
+     * 返回 Json 格式的数据
+     * @param request
+     * @param response
+     * @return ArrayList<Monster>
+     */
+    @RequestMapping(value = "/monster/list/json")
+    @ResponseBody
+    public ArrayList<Monster> listMonsterByJson(HttpServletRequest request,
+                                                HttpServletResponse response
+                                                ) {
+
+        ArrayList<Monster> monsterList = monsterService.findMonsterByName("");
+
+        return monsterList;
     }
 
 

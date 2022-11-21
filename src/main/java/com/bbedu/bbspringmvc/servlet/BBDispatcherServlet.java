@@ -1,10 +1,13 @@
 package com.bbedu.bbspringmvc.servlet;
 
+import com.alibaba.fastjson.JSON;
 import com.bbedu.bbspringmvc.annotation.Controller;
 import com.bbedu.bbspringmvc.annotation.RequestMapping;
 import com.bbedu.bbspringmvc.annotation.RequestParam;
+import com.bbedu.bbspringmvc.annotation.ResponseBody;
 import com.bbedu.bbspringmvc.context.BBWebApplicationContext;
 import com.bbedu.bbspringmvc.handler.BBHandler;
+import com.bbedu.entity.Monster;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -12,9 +15,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -237,6 +242,20 @@ public class BBDispatcherServlet extends HttpServlet {
                     }
 
                 }// TODO 这里可以拓展类型
+                else if (result instanceof ArrayList) {
+                    // 判断目标方法是否有 @ResponseBody
+                    Method method = bbHandler.getMethod();
+                    if (method.isAnnotationPresent(ResponseBody.class)) {
+                        // Arraylist -> Json
+                        System.out.println(result.toString());
+                        String jsonString = JSON.toJSONString(result);
+                        response.setContentType("text/json;charset=utf-8");
+                        PrintWriter writer = response.getWriter();
+                        writer.write(jsonString);
+                        writer.flush();
+                        writer.close();
+                    }
+                }
             }
         } catch (IOException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);

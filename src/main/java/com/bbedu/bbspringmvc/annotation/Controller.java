@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 
 /**
  * 用于标识控制器组件
+ * @author BBChen
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
