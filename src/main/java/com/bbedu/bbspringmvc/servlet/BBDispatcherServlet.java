@@ -2,6 +2,7 @@ package com.bbedu.bbspringmvc.servlet;
 
 import com.bbedu.bbspringmvc.annotation.Controller;
 import com.bbedu.bbspringmvc.annotation.RequestMapping;
+import com.bbedu.bbspringmvc.annotation.RequestParam;
 import com.bbedu.bbspringmvc.context.BBWebApplicationContext;
 import com.bbedu.bbspringmvc.handler.BBHandler;
 
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +120,7 @@ public class BBDispatcherServlet extends HttpServlet {
     }
 
     /**
-     * 分发请求
+     * 完成分发请求任务
      * @param request
      * @param response
      */
@@ -129,10 +131,126 @@ public class BBDispatcherServlet extends HttpServlet {
             if (bbHandler == null) {
                 response.getWriter().print("<h1>404 NOT FOUND</h1>");
             } else {
-                bbHandler.getMethod().invoke(bbHandler.getController(), request, response);
+                /*
+                    下面的写法，是针对目标方法是形如：
+                    method(HttpServletRequest request, HttpServletResponse response)
+                 */
+//                bbHandler.getMethod()
+//                        .invoke(bbHandler.getController(), request, response);
+
+                // 将需要传递给目标方法的 实参 封装到参数数组，=> 反射调用
+                // public Object invoke(Object obj, Object... args)
+
+                // 1.得到目标方法的参数信息
+                Class<?>[] parameterTypes =
+                        bbHandler.getMethod().getParameterTypes();
+
+                // 2.创建参数数组(对应实参数组), 在后面反射调用目标方法时, 会使用到
+                Object[] params = new Object[parameterTypes.length];
+                for (int i = 0; i < parameterTypes.length; i++) {
+                    Class<?> parameterType = parameterTypes[i];
+
+                    if ("HttpServletRequest".equals(parameterType.getSimpleName())) {
+                        params[i] = request;
+                    } else if ("HttpServletResponse".equals(parameterType.getSimpleName())) {
+                        params[i] = response;
+                    }
+                }
+
+                // 获得 Http 请求的参数集合
+                Map<String, String[]> parameterMap =
+                        request.getParameterMap();
+
+                // 遍历
+                // Map.Entry<String, String[]>
+                // 第一个参数 String 表示请求参数名
+                // 第二个参数 String[] 表示请求值
+                for (Map.Entry<String, String[]> stringEntry : parameterMap.entrySet()) {
+                    // 取出 key => 请求参数名
+                    String name = stringEntry.getKey();
+                    // 仅考虑单个值
+                    String value = stringEntry.getValue()[0];
+
+                    // 对应目标方法的第几个参数
+                    // 得到请求参数对应的是第几个形参 => 单独编写方法
+//                    params[?]
+                    int paramIndex = getIndexRequestParamIndex(bbHandler.getMethod(), name);
+                    if (paramIndex != -1) {
+                        // 找到对应位置
+                        params[paramIndex] = value;
+                    } else {
+                        // TODO 没有找到，使用默认机制
+                        // 得到目标方法所有形参名称 => 单独编写方法
+                        // 对得到目标方法的所有形参名进行匹配 匹配 => 填充到 params
+                        List<String> parameterNames =
+                                getParameterNames(bbHandler.getMethod());
+
+                        for (int i = 0; i < parameterNames.size(); i++) {
+                            // 如果匹配
+                            if (name.equals(parameterNames.get(i))) {
+                                params[i] = value;
+                                break;
+                            }
+                        }
+                    }
+
+                }
+
+                bbHandler.getMethod()
+                        .invoke(bbHandler.getController(), params);
             }
         } catch (IOException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * 编写一个方法，返回得到请求参数在对应方法是第几个形参
+     * @param method
+     * @param name
+     * @return int
+     */
+    public int getIndexRequestParamIndex(Method method, String name) {
+
+        Parameter[] parameters = method.getParameters();
+
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            boolean annotationPresent = parameter.isAnnotationPresent(RequestParam.class);
+            if (annotationPresent) {
+                // 有 @RequestParam
+                RequestParam requestParamAnnotation = parameter.getAnnotation(RequestParam.class);
+                String value = requestParamAnnotation.value();
+                // 匹配比较
+                if (name.equals(value)) {
+                    return i;
+                }
+            }
+        }
+
+        // 没有匹配成功
+        return -1;
+    }
+
+    /**
+     * 得到目标方法所有形参名称
+     * @param method
+     * @return List<String>
+     */
+    public List<String> getParameterNames(Method method) {
+
+        List<String> parametersList = new ArrayList<>();
+
+        // 获取所有参数名称 -> 细节
+        // 默认情况下，parameter.getName() 得到的名字，不是形参真正的名字
+        // 而是 [arg0, arg1, arg2...]
+        // !!! 引入插件, 使用java8特性
+        Parameter[] parameters = method.getParameters();
+
+        for (Parameter parameter : parameters) {
+            parametersList.add(parameter.getName());
+        }
+        System.out.println("parametersList = " + parametersList);
+        return parametersList;
     }
 }
